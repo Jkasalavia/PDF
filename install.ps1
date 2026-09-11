@@ -1,5 +1,6 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"
 
 $ZipUrl = "https://github.com/Jkasalavia/PDF/releases/download/V1/fastinstall.zip"
 $InstallRoot = Join-Path $env:TEMP ("pdf-fastinstall-" + [guid]::NewGuid().ToString("N"))
@@ -11,16 +12,32 @@ function Write-Step {
     Write-Host "==> $Message"
 }
 
+function Save-Url {
+    param(
+        [Parameter(Mandatory = $true)][string]$Url,
+        [Parameter(Mandatory = $true)][string]$Path
+    )
+
+    $WebClient = [System.Net.WebClient]::new()
+    try {
+        $WebClient.Headers.Add("User-Agent", "PDF-fastinstall")
+        $WebClient.DownloadFile($Url, $Path)
+    }
+    finally {
+        $WebClient.Dispose()
+    }
+}
+
 try {
     New-Item -ItemType Directory -Path $InstallRoot, $ExtractPath -Force | Out-Null
 
     Write-Step "Downloading installer package"
-    Invoke-WebRequest -Uri $ZipUrl -OutFile $ZipPath -UseBasicParsing
+    Save-Url -Url $ZipUrl -Path $ZipPath
 
     Write-Step "Extracting package"
     Expand-Archive -LiteralPath $ZipPath -DestinationPath $ExtractPath -Force
 
-    $CmdFiles = Get-ChildItem -LiteralPath $ExtractPath -Recurse -File -Filter "*.cmd"
+    $CmdFiles = @(Get-ChildItem -LiteralPath $ExtractPath -Recurse -File -Filter "*.cmd")
     if ($CmdFiles.Count -eq 0) {
         throw "No .cmd file was found inside the downloaded zip."
     }
