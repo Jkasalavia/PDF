@@ -7,6 +7,12 @@ $InstallRoot = Join-Path $env:TEMP ("pdf-fastinstall-" + [guid]::NewGuid().ToStr
 $ZipPath = Join-Path $InstallRoot "fastinstall.zip"
 $ExtractPath = Join-Path $InstallRoot "extracted"
 
+function Show-Banner {
+    Write-Host ""
+    Write-Host "FV INSTALLING.." -ForegroundColor Cyan
+    Write-Host ""
+}
+
 function Write-Step {
     param([Parameter(Mandatory = $true)][string]$Message)
     Write-Host "==> $Message"
@@ -29,6 +35,7 @@ function Save-Url {
 }
 
 try {
+    Show-Banner
     New-Item -ItemType Directory -Path $InstallRoot, $ExtractPath -Force | Out-Null
 
     Write-Step "Downloading installer package"
